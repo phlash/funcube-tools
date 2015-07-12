@@ -15,13 +15,17 @@ uint32_t getbits(uint8_t *pkt, int off, int len) {
 	return rv;
 }
  
-static char *csv_fc1="ID,FRAME,PV1,PV2,PV3,PCUR,VBAT,SCUR,RCNT,EPSE,B1T,B2T,B3T,TBAT,5V1L,3V3L,RESC,PPTM,"
-	"SUNX,SUNY,SUNZ,SPX+T,SPX-T,SPY+T,SPY-T,3V3V,3V3C,5V0V,RXDP,RSSI,RFT,RXC,TXC3,TXC5,PAFW,PARV,PAT,PAC"
+static char *csv_fc1="ID,FRAME,PV0,PV1,PV2,PCUR,VBAT,SCUR,RCNT,EPSE,B0T,B1T,B2T,TBAT,5V0L,3V3L,RESC,PPTM,"
+	"SUNX,SUNY,SUNZ,SPT+X,SPT-X,SPT+Y,SPT-Y,3V3V,3V3C,5V0V,RXDP,RSSI,RFT,RXC,TXC3,TXC5,PAFW,PARV,PAT,PAC,"
 	"ANT0,ANT1,AND0,AND1,AND2,AND3,SEQ,CCNT,LCMD,CMDOK,DVAS,DVEPS,DVPA,DVRF,DVMSE,DVAN1,DVAN0,ECLP,SAFE,HABF,SABF,WAIT\n";
+
 static char *csv_ukube="ID,FRAME,SUN,SCUR0,SCUR1,SCUR2,SCUR3,SCUR4,SCUR5,SCUR6,SCUR7,SCUR8,SCUR9,SCUR10,SCUR11,STEMP,"
 	"B0D,B0C,B0CV,B0V,B0T,B1D,B1C,B1CV,B1V,B1T,B2D,B2C,B2CV,B2V,B2T,BHEAT,ATIME,A0S,A1S,A2S,A3S,ATEMP,"
 	"RF0,RF1,RF2,RF3,RF4,RF5,PA0,PA1,PA2,PA3,MAG0,MAG1,MAG2,MTEMP,SEQ,CCNT,LCMD,CMDOK\n";
-static char *csv_nayif="";
+
+static char *csv_nayif="ID,FRAME,EXFRM,EXID,PV0,PV1,PV3,VBAT,PC0,PC1,PC2,PCT,SYSC,REBT,B0T,B1T,B2T,TBAT,5V0L,5V0C,RESC,PPTM,"
+	"IQM,IME,IMC,IMT,SUN+X,SUN-X,SUN+Y,SUN-Y,SUN+Z,SUN-Z,3V3V,3V3C,5V0V,5V0C,RXDP,RSSI,RFT,RXC,TXC3,TXC5,PAFW,PARV,PAT,PAC,"
+	"ANT0,ANT1,AND0,AND1,AND2,AND3,SEQ,CCNT,LCMD,CMDOK,DVAS,DVEPS,DVPA,DVRF,DVMSE,DVAN1,DVAN0,ECLP,SAFE,HABF,SABF,WAIT\n";
 
 void csvprint(uint32_t v, FILE *cp) {
 	if (cp) {
@@ -29,9 +33,12 @@ void csvprint(uint32_t v, FILE *cp) {
 	}
 }
 
+static int jump = 0;
 void decode_fc1(uint8_t *pkt, FILE *cp) {
 	uint32_t v;
 	int i;
+	if (jump)
+		goto rf_pa;
 	v = getbits(pkt, 0, 2);
 	printf("ID: %x ", v);
 	csvprint(v, cp);
@@ -104,6 +111,7 @@ void decode_fc1(uint8_t *pkt, FILE *cp) {
 	v = getbits(pkt, 290, 10);
 	printf("5v0 V: %03x ", v);
 	csvprint(v, cp);
+rf_pa:
 	v = getbits(pkt, 300, 8);
 	printf("RX doppler: %02x ", v);
 	csvprint(v, cp);
@@ -268,6 +276,94 @@ void decode_ukube(uint8_t *pkt, FILE *cp) {
 }
 
 void decode_nayif(uint8_t *pkt, FILE *cp) {
+	uint32_t v;
+	int i;
+	v = getbits(pkt, 0, 2);
+	printf("ID: %02x ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 2, 6);
+	printf("Frame: %02x ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 8, 2);
+	printf("ExtFrame: %02x ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 10, 6);
+	printf("ExtID: %02x ", v);
+	csvprint(v, cp);
+	for (i=0; i<3; i++) {
+		v = getbits(pkt, 16+(14*i), 14);
+		printf("PV%d: %d ", i, v);
+		csvprint(v, cp);
+	}
+	v = getbits(pkt, 58, 14);
+	printf("VBAT: %d ", v);
+	csvprint(v, cp);
+	for (i=0; i<3; i++) {
+		v = getbits(pkt, 72+(10*i), 10);
+		printf("PC%d: %d ", i, v);
+		csvprint(v, cp);
+	}
+	v = getbits(pkt, 102, 10);
+	printf("Photo A: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 112, 10);
+	printf("Sys A: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 122, 8);
+	printf("Reboots: %d ", v);
+	csvprint(v, cp);
+	for (i=0; i<3; i++) {
+		v = getbits(pkt, 130+(8*i), 8);
+		printf("BC%d T: %d ", i, v);
+		csvprint(v, cp);
+	}
+	v = getbits(pkt, 154, 8);
+	printf("Batt T: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 162, 8);
+	printf("5v latch: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 170, 8);
+	printf("5v A: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 178, 4);
+	printf("Reset: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 182, 4);
+	printf("PPT mode: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 186, 2);
+	printf("iMTQ mode: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 188, 3);
+	printf("iMTQ err: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 191, 1);
+	printf("iMTQ conf?: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 192, 8);
+	printf("iMTQ T: %d ", v);
+	csvprint(v, cp);
+	for (i=0; i<6; i++) {
+		v = getbits(pkt, 200+(10*i), 6);
+		printf("SUN%d: %d ", i, v);
+		csvprint(v, cp);
+	}
+	v = getbits(pkt, 260, 10);
+	printf("3v3 V: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 270, 10);
+	printf("3v3 A: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 280, 10);
+	printf("5v0 A: %d ", v);
+	csvprint(v, cp);
+	v = getbits(pkt, 290, 10);
+	printf("5v0 V: %d ", v);
+	csvprint(v, cp);
+	// From here on in - similar to FC-1
+	jump = 1;
+	decode_fc1(pkt, cp);
 }
 
 void dump(uint8_t *pkt) {
