@@ -47,126 +47,126 @@ void decode_fc1(uint8_t *pkt, FILE *cp) {
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 8+(16*i), 16);
-		printf("pV%i: %04x ", i, v);
+		printf("pV[%i]: %04x ", i, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 56, 16);
 	printf("pA: %04x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 72, 16);
-	printf("batt V: %04x ", v);
+	printf("battV: %04x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 88, 16);
-	printf("sys A: %04x ", v);
+	printf("sysA: %04x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 104, 16);
 	printf("reboots: %04x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 120, 16);
-	printf("EPS errs: %04x ", v);
+	printf("EPSerrs: %04x ", v);
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 136+(8*i), 8);
-		printf("BC%i temp: %02x ", i, v);
+		printf("BCT[%i]: %02x ", i, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 160, 8);
-	printf("batt T: %02x ", v);
+	printf("battT: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 168, 8);
-	printf("latch 5v0: %02x ", v);
+	printf("latch5v0: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 176, 8);
-	printf("latch 3v3: %02x ", v);
+	printf("latch3v3: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 184, 8);
-	printf("EPS cause: %02x ", v);
+	printf("EPScause: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 192, 8);
-	printf("PPT mode: %02x ", v);
+	printf("PPTmode: %02x ", v);
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 200+(10*i), 10);
-		printf("sun%d: %03x ", i, v);
+		printf("sun[%d]: %03x ", i, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 230, 10);
-	printf("panel T+X: %03x ", v);
+	printf("panelT+X: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 240, 10);
-	printf("panel T-X: %03x ", v);
+	printf("panelT-X: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 250, 10);
-	printf("panel T+Y: %03x ", v);
+	printf("panelT+Y: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 260, 10);
-	printf("panel T-Y: %03x ", v);
+	printf("panelT-Y: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 270, 10);
-	printf("3v3 V: %03x ", v);
+	printf("3v3V: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 280, 10);
-	printf("3v3 A: %03x ", v);
+	printf("3v3A: %03x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 290, 10);
-	printf("5v0 V: %03x ", v);
+	printf("5v0V: %03x ", v);
 	csvprint(v, cp);
 rf_pa:
 	v = getbits(pkt, 300, 8);
-	printf("RX doppler: %02x ", v);
+	printf("RXdoppler: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 308, 8);
 	printf("RSSI: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 316, 8);
-	printf("RX Temp: %02x ", v);
+	printf("RXT: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 324, 8);
-	printf("RX A: %02x ", v);
+	printf("RXA: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 332, 8);
-	printf("TX3v3 A: %02x ", v);
+	printf("TX3v3A: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 340, 8);
-	printf("TX5v0 A: %02x ", v);
+	printf("TX5v0A: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 348, 8);
-	printf("PA Fwd: %02x ", v);
+	printf("PAfwd: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 356, 8);
-	printf("PA Rev: %02x ", v);
+	printf("PArev: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 364, 8);
-	printf("PA Temp: %02x ", v);
+	printf("PAT: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 372, 8);
-	printf("PA A: %02x ", v);
+	printf("PAA: %02x ", v);
 	csvprint(v, cp);
 	for (i=0; i<2; i++) {
 		v = getbits(pkt, 380+(8*i), 8);
-		printf("Ants%d T: %02x ", i, v);
+		printf("AntsT[%d]: %02x ", i, v);
 		csvprint(v, cp);
 	}
 	for (i=0; i<4; i++) {
 		v = getbits(pkt, 396+i, 1);
-		printf("Ants%d D: %x ", i, v);
+		printf("AntsD[%d]: %x ", i, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 400, 24);
 	printf("Seq: %06x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 424, 6);
-	printf("DTMF cnt: %02x ", v);
+	printf("DTMFcnt: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 430, 5);
-	printf("DTMF cmd: %02x ", v);
+	printf("DTMFcmd: %02x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 435, 1);
-	printf("DTMF ok: %x ", v);
+	printf("DTMFok: %x ", v);
 	csvprint(v, cp);
 	for (i=0; i<7; i++) {
 		v = getbits(pkt, 436+i, 1);
-		printf("DV%d: %x ", i, v);
+		printf("DataV[%d]: %x ", i, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 443, 1);
@@ -176,13 +176,13 @@ rf_pa:
 	printf("Safe?: %x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 445, 1);
-	printf("hw abf?: %x ", v);
+	printf("hwabf?: %x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 446, 1);
-	printf("sw abf?: %x ", v);
+	printf("swabf?: %x ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 447, 1);
-	printf("Dep wait?: %x\n\n", v);
+	printf("DepWait?: %x\n\n", v);
 	csvprint(v, cp);
 }
 
@@ -292,74 +292,74 @@ void decode_nayif(uint8_t *pkt, FILE *cp) {
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 16+(14*i), 14);
-		printf("PV%d: %d ", i, v);
+		printf("PV[%d]: %04x(%d) ", i, v, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 58, 14);
-	printf("VBAT: %d ", v);
+	printf("BattV: %04x(%d) ", v, v);
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 72+(10*i), 10);
-		printf("PC%d: %d ", i, v);
+		printf("PC[%d]: %03x(%d) ", i, v, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 102, 10);
-	printf("Photo A: %d ", v);
+	printf("PhotoA: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 112, 10);
-	printf("Sys A: %d ", v);
+	printf("SysA: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 122, 8);
-	printf("Reboots: %d ", v);
+	printf("Reboots: %02x(%d) ", v, v);
 	csvprint(v, cp);
 	for (i=0; i<3; i++) {
 		v = getbits(pkt, 130+(8*i), 8);
-		printf("BC%d T: %d ", i, v);
+		printf("BCT[%d]: %02x(%d) ", i, v, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 154, 8);
-	printf("Batt T: %d ", v);
+	printf("BattT: %02x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 162, 8);
-	printf("5v latch: %d ", v);
+	printf("5Vlatch: %02x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 170, 8);
-	printf("5v A: %d ", v);
+	printf("5vA: %02x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 178, 4);
-	printf("Reset: %d ", v);
+	printf("Reset: %01x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 182, 4);
-	printf("PPT mode: %d ", v);
+	printf("PPTmode: %01x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 186, 2);
-	printf("iMTQ mode: %d ", v);
+	printf("iMTQmode: %01x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 188, 3);
-	printf("iMTQ err: %d ", v);
+	printf("iMTQerr: %01x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 191, 1);
-	printf("iMTQ conf?: %d ", v);
+	printf("iMTQconf?: %d ", v);
 	csvprint(v, cp);
 	v = getbits(pkt, 192, 8);
-	printf("iMTQ T: %d ", v);
+	printf("iMTQT: %02x(%d) ", v, v);
 	csvprint(v, cp);
 	for (i=0; i<6; i++) {
 		v = getbits(pkt, 200+(10*i), 6);
-		printf("SUN%d: %d ", i, v);
+		printf("SUN[%d]: %02x(%d) ", i, v, v);
 		csvprint(v, cp);
 	}
 	v = getbits(pkt, 260, 10);
-	printf("3v3 V: %d ", v);
+	printf("3v3V: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 270, 10);
-	printf("3v3 A: %d ", v);
+	printf("3v3A: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 280, 10);
-	printf("5v0 A: %d ", v);
+	printf("5v0A: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	v = getbits(pkt, 290, 10);
-	printf("5v0 V: %d ", v);
+	printf("5v0V: %03x(%d) ", v, v);
 	csvprint(v, cp);
 	// From here on in - similar to FC-1
 	jump = 1;
