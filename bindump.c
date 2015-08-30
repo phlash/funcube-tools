@@ -366,41 +366,57 @@ void decode_nayif(uint8_t *pkt, FILE *cp) {
 	decode_fc1(pkt, cp);
 }
 
-void dump(uint8_t *pkt) {
-	int i;
-	for (i=0; i<56; i++)
-		printf("%02x ", pkt[i]);
+void dump(uint8_t *pkt, int len) {
+	int i, j;
+	for (i=0; i<len; i+=16) {
+		printf("%04x: ", i);
+		for (j=0; j<16 && i+j<len; j++)
+			printf("%02x ", pkt[i+j]);
+		while (j++<16)
+			printf("   ");
+		printf("  ");
+		for (j=0; j<16 && i+j<len; j++)
+			printf("%c", isprint(pkt[i+j]) ? pkt[i+j] : '.');
+		printf("\n");
+	}
 	printf("\n");
 }
 
 typedef void (*decode_t)(uint8_t *, FILE *);
 
 int usage() {
-	puts("usage: bindump [-u[kube]] [-n[ayif]] [-f <bin file>] [-c <csv output file>]");
+	puts("usage: bindump [-f[uncube]] [-u[kube]] [-n[ayif]] [-i <bin file>] [-d[umphex]] [-c <csv output file>]");
 	return 0;
 }
 
 int main(int argc, char **argv) {
 	char *bin = "tlmtestcapture.funcubebin";
-	char *csv = NULL, *csv_hdrs = csv_fc1;
+	char *csv = NULL, *csv_hdrs = "NONE\n";
 	FILE *fp, *cp = NULL;
-	decode_t pdec = decode_fc1;
+	int dhex = 0;
+	decode_t pdec = NULL;
 	uint8_t pkt[256];
 	int arg;
 
 	for (arg=1; arg<argc; arg++) {
-		if (!strncmp(argv[arg], "-f", 2))
+		if (!strncmp(argv[arg], "-i", 2)) {
 			bin = argv[++arg];
-		else if (!strncmp(argv[arg], "-u", 2)) {
+		} else if (!strncmp(argv[arg], "-f", 2)) {
+			pdec = decode_fc1;
+			csv_hdrs = csv_fc1;
+		} else if (!strncmp(argv[arg], "-u", 2)) {
 			pdec = decode_ukube;
 			csv_hdrs = csv_ukube;
 		} else if (!strncmp(argv[arg], "-n", 2)) {
 			pdec = decode_nayif;
 			csv_hdrs = csv_nayif;
-		} else if (!strncmp(argv[arg], "-c", 2))
+		} else if (!strncmp(argv[arg], "-c", 2)) {
 			csv = argv[++arg];
-		else
+		} else if (!strncmp(argv[arg], "-d", 2)) {
+			dhex = 1;
+		} else {
 			return usage();
+		}
 	}
 	fprintf(stderr, "dumping: %s\n", bin);
 	fp = fopen(bin, "rb");
@@ -419,8 +435,9 @@ int main(int argc, char **argv) {
 		}
 	}
 	while (fread(pkt, sizeof(pkt), 1, fp)==1) {
-		dump(pkt);
-		pdec(pkt, cp);
+		if (dhex) dump(pkt, sizeof(pkt));
+		if (pdec) pdec(pkt, cp);
+		if (cp) fprintf(cp, "\n");
 	}
 	fclose(fp);
 	if (cp)
