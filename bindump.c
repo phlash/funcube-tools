@@ -34,8 +34,8 @@ void csvprint(uint32_t v, FILE *cp) {
 }
 
 static int jump = 0;
-void decode_fc1(uint8_t *pkt, FILE *cp) {
-	uint32_t v;
+uint32_t decode_fc1(uint8_t *pkt, FILE *cp) {
+	uint32_t v, s;
 	int i;
 	if (jump)
 		goto rf_pa;
@@ -152,9 +152,9 @@ rf_pa:
 		printf("AntsD[%d]: %x ", i, v);
 		csvprint(v, cp);
 	}
-	v = getbits(pkt, 400, 24);
-	printf("Seq: %06x ", v);
-	csvprint(v, cp);
+	s = getbits(pkt, 400, 24);
+	printf("Seq: %06x ", s);
+	csvprint(s, cp);
 	v = getbits(pkt, 424, 6);
 	printf("DTMFcnt: %02x ", v);
 	csvprint(v, cp);
@@ -184,10 +184,11 @@ rf_pa:
 	v = getbits(pkt, 447, 1);
 	printf("DepWait?: %x\n\n", v);
 	csvprint(v, cp);
+	return s;
 }
 
-void decode_ukube(uint8_t *pkt, FILE *cp) {
-	uint32_t v;
+uint32_t decode_ukube(uint8_t *pkt, FILE *cp) {
+	uint32_t v, s;
 	int i;
 	v = getbits(pkt, 0, 2);
 	printf("ID: %x ", v);
@@ -260,9 +261,9 @@ void decode_ukube(uint8_t *pkt, FILE *cp) {
 	csvprint(v, cp);
 	v = getbits(pkt, 403, 9);
 	printf("padding: %x\n", v);
-	v = getbits(pkt, 412, 24);
-	printf("sequence: %03x ", v);
-	csvprint(v, cp);
+	s = getbits(pkt, 412, 24);
+	printf("sequence: %03x ", s);
+	csvprint(s, cp);
 	v = getbits(pkt, 436, 6);
 	printf("dtmf cmd count: %02x ", v);
 	csvprint(v, cp);
@@ -272,10 +273,11 @@ void decode_ukube(uint8_t *pkt, FILE *cp) {
 	v = getbits(pkt, 447, 1);
 	printf("dtmf cmd success: %x\n\n", v);
 	if (cp)
-		fprintf(cp, "%u\n", v);
+		fprintf(cp, "%u", v);
+	return s;
 }
 
-void decode_nayif(uint8_t *pkt, FILE *cp) {
+uint32_t decode_nayif(uint8_t *pkt, FILE *cp) {
 	uint32_t v;
 	int i;
 	v = getbits(pkt, 0, 2);
@@ -363,7 +365,7 @@ void decode_nayif(uint8_t *pkt, FILE *cp) {
 	csvprint(v, cp);
 	// From here on in - similar to FC-1
 	jump = 1;
-	decode_fc1(pkt, cp);
+	return decode_fc1(pkt, cp);
 }
 
 void dump(uint8_t *pkt, int len) {
@@ -382,18 +384,19 @@ void dump(uint8_t *pkt, int len) {
 	printf("\n");
 }
 
-typedef void (*decode_t)(uint8_t *, FILE *);
+typedef uint32_t (*decode_t)(uint8_t *, FILE *);
 
 int usage() {
-	puts("usage: bindump [-f[uncube]] [-u[kube]] [-n[ayif]] [-i <bin file>] [-d[umphex]] [-c <csv output file>]");
+	puts("usage: bindump [-f[uncube]] [-u[kube]] [-n[ayif]] [-i <bin file>] [-d[umphex] <seq>] [-c <csv output file>] [-p <payload dump file>]");
 	return 0;
 }
 
 int main(int argc, char **argv) {
 	char *bin = "tlmtestcapture.funcubebin";
 	char *csv = NULL, *csv_hdrs = "NONE\n";
-	FILE *fp, *cp = NULL;
-	int dhex = 0;
+	char *pay = NULL;
+	FILE *fp, *cp = NULL, *pp = NULL;
+	uint32_t dhex = 0;
 	decode_t pdec = NULL;
 	uint8_t pkt[256];
 	int arg;
@@ -412,8 +415,10 @@ int main(int argc, char **argv) {
 			csv_hdrs = csv_nayif;
 		} else if (!strncmp(argv[arg], "-c", 2)) {
 			csv = argv[++arg];
+		} else if (!strncmp(argv[arg], "-p", 2)) {
+			pay = argv[++arg];
 		} else if (!strncmp(argv[arg], "-d", 2)) {
-			dhex = 1;
+			dhex = (uint32_t)atol(argv[++arg]);
 		} else {
 			return usage();
 		}
@@ -428,19 +433,28 @@ int main(int argc, char **argv) {
 		cp = fopen(csv, "wb");
 		if (!cp) {
 			perror("opening CSV file");
-			fclose(fp);
 			return 1;
 		} else {
 			fputs(csv_hdrs, cp);
 		}
 	}
+	if (pay) {
+		pp = fopen(pay, "wb");
+		if (!pp) {
+			perror("opening Payload file");
+			return 1;
+		}
+	}
 	while (fread(pkt, sizeof(pkt), 1, fp)==1) {
-		if (dhex) dump(pkt, sizeof(pkt));
-		if (pdec) pdec(pkt, cp);
+		uint32_t s = 0;
+		if (pdec) s = pdec(pkt, cp);
+		if (dhex > 0 && s == dhex) { dump(pkt, sizeof(pkt)); if (pp) fwrite(pkt+56, sizeof(pkt)-56, 1, pp); }
 		if (cp) fprintf(cp, "\n");
 	}
 	fclose(fp);
 	if (cp)
 		fclose(cp);
+	if (pp)
+		fclose(pp);
 	return 0;
 }
