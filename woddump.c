@@ -20,6 +20,8 @@ static char *csv_fc1="CNT,MSE0,MSE1,MSE2,MSE3,ASIB0,ASIB1,ASIB2,ASIB3,EPS0,EPS1,
 static char *csv_ukube="CNT,MSE0,MSE1,MSE2,MSE3,AMAC0,AMAC1,AMAC2,AMAC3,AMAC4,"
 	"BCUR0,BCEL0,BVLT0,BTMP0,BDIR1,BCUR1,BCEL1,BVLT1,BTMP1,BDIR2,BCUR2,BCEL2,BVLT2,PAD\n";
 
+static char *csv_nayif="CNT,TMPC,TMPR,TMPP,ASIB0,ASIB1,ASIB2,ASIB3,ASIB4,ASIB5,ASIB6,ASIB7,ASIB8,ASIB9,ASIB10,ASIB11,TMPB,PCUR,BVLT,SCUR\n";
+
 void csvprint(uint32_t v, FILE *cp) {
 	if (cp) {
 		fprintf(cp, "%u,", v);
@@ -107,8 +109,54 @@ void decode_ukube(uint8_t *pkt, FILE *cp) {
 		fprintf(cp, "%02x", v);
 }
 
+void decode_nayif(uint8_t *pkt, FILE *cp) {
+	uint32_t v;
+	int i;
+	printf("CPU temp: ");
+	v = getbits(pkt, 0, 12);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("RF temp: ");
+	v = getbits(pkt, 12, 12);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("PA temp: ");
+	v = getbits(pkt, 24, 12);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("Solar temps: ");
+	for (i=0; i<6; i ++) {
+		v = getbits(pkt, 36+(i*10), 10);
+		printf("%d: %u ", i, v);
+		csvprint(v, cp);
+	}
+	printf("Sun sens: ");
+	for (i=0; i<6; i ++) {
+		v = getbits(pkt, 96+(i*10), 10);
+		printf("%d: %u ", i, v);
+		csvprint(v, cp);
+	}
+	printf("Batt temp: ");
+	v = getbits(pkt, 156, 8);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("Photo cur: ");
+	v = getbits(pkt, 164, 10);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("Batt volts: ");
+	v = getbits(pkt, 174, 14);
+	printf("%u ", v);
+	csvprint(v, cp);
+	printf("Sys curr: ");
+	v = getbits(pkt, 188, 12);
+	printf("%u\n", v);
+	if (cp)
+		fprintf(cp, "%u", v);
+}
+
 int usage() {
-	puts("usage: woddump [-i <wod stream file>] [-u[kube]] [-f[uncube1]] [-c <csv output>]");
+	puts("usage: woddump [-i <wod stream file>] [-f[uncube1]] [-u[kube]] [-n[ayif]] [-c <csv output>]");
 	return 0;
 }
 
@@ -119,8 +167,8 @@ int main(int argc, char **argv) {
 	char *csv = NULL, *csv_hdrs = "NONE\n";
 	decode_ptr decode = NULL;
 	FILE *fp, *cp = NULL;
-	uint8_t pkt[23];
-	int arg;
+	uint8_t pkt[25];
+	int siz = 0, cnt = 0, arg;
 
 	for (arg=1; arg<argc; arg++) {
 		if (!strncmp(argv[arg], "-h", 2)) {
@@ -129,12 +177,21 @@ int main(int argc, char **argv) {
 			wod = argv[++arg];
 		} else if (!strncmp(argv[arg], "-c", 2)) {
 			csv = argv[++arg];
-		} else if (!strncmp(argv[arg], "-u", 2)) {
-			csv_hdrs = csv_ukube;
-			decode = decode_ukube;
 		} else if (!strncmp(argv[arg], "-f", 2)) {
+			siz = 23;
+			cnt = 104;
 			csv_hdrs = csv_fc1;
 			decode = decode_fc1;
+		} else if (!strncmp(argv[arg], "-u", 2)) {
+			siz = 23;
+			cnt = 104;
+			csv_hdrs = csv_ukube;
+			decode = decode_ukube;
+		} else if (!strncmp(argv[arg], "-n", 2)) {
+			siz = 25;
+			cnt = 96;
+			csv_hdrs = csv_nayif;
+			decode = decode_nayif;
 		}
 	}
 	fprintf(stderr, "dumping: %s\n", wod);
@@ -153,17 +210,19 @@ int main(int argc, char **argv) {
 		}
 	}
 	arg = 0;
-	while (arg<104 && fread(pkt, sizeof(pkt), 1, fp)==1) {
+	while (arg<cnt && fread(pkt, siz, 1, fp)==1) {
 		printf("CNT: %d ", arg);
 		if (cp) fprintf(cp, "%d,", arg);
 		if (decode) decode(pkt, cp);
 		if (cp) fprintf(cp, "\n");
 		++arg;
 	}
-	if (fread(pkt, 8, 1, fp) == 1)
-		printf("Callsign: %.8s\n", pkt);
-	else
-		fprintf(stderr, "cannot read callsign trailer\n");
+	if (cnt != 96) {
+		if (fread(pkt, 8, 1, fp) == 1)
+			printf("Callsign: %.8s\n", pkt);
+		else
+			fprintf(stderr, "cannot read callsign trailer\n");
+	}
 	fclose(fp);
 	if (cp)
 		fclose(cp);
